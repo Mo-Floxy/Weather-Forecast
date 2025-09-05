@@ -5,21 +5,22 @@ export default function App() {
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ new state for loading
+  const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const API_KEY = "0e400ff44b79686930aba79e2b3f5531";
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   const fetchWeatherByCity = async (cityName) => {
     if (!cityName) return;
     try {
-      setLoading(true); // start loading
+      setLoading(true);
       const res = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric`
       );
       const data = await res.json();
-      if (data.cod !== "200" && data.cod !== 200) {
+      if (data.cod !== 200 && data.cod !== "200") {
         setError("❌ City not found. Please enter a valid city name");
         setForecast([]);
         setLoading(false);
@@ -37,7 +38,7 @@ export default function App() {
       setError("⚠ Failed to fetch weather data. Please try again later.");
       setForecast([]);
     } finally {
-      setLoading(false); // stop loading
+      setLoading(false);
     }
   };
 
@@ -57,7 +58,7 @@ export default function App() {
       setForecast(forecastData.list.filter((_, i) => i % 8 === 0));
       setCity(data.name);
     } catch (err) {
-      console.error("Error fetching weather:", err);
+      setError("⚠ Failed to fetch weather data by location.");
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,6 @@ export default function App() {
   const getWeatherEmoji = (description) => {
     if (!description) return "☀️";
     const desc = description.toLowerCase();
-
     const emojiMap = {
       "clear sky": "☀️",
       "few clouds": "🌤️",
@@ -102,15 +102,17 @@ export default function App() {
       dust: "🌪️",
       fog: "🌁",
     };
-
     return emojiMap[desc] || "🌍";
   };
 
   return (
     <div className={darkMode ? "app dark-mode" : "app"}>
-      {/* 🌙 Dark mode toggle button */}
-      <button className="dark-toggle" onClick={() => setDarkMode(!darkMode)}>
-        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+      {/* Dark Mode Toggle */}
+      <button className="dark-toggle" onClick={toggleDarkMode}>
+        <span className="dark-text">
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </span>
+        <span className="dark-icon">{darkMode ? "☀️" : "🌙"}</span>
       </button>
 
       <div
@@ -120,14 +122,11 @@ export default function App() {
           backgroundImage: darkMode
             ? "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1503264116251-35a269479413?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80')"
             : "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('https://images.unsplash.com/photo-1501630834273-4b5604d2ee31')",
-
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: "0",
         }}
       >
         <div
@@ -149,6 +148,7 @@ export default function App() {
             🌤 Weather Forecast
           </h1>
 
+          {/* Search Input */}
           <div className="input-group mb-3" style={{ maxWidth: "500px" }}>
             <input
               type="text"
@@ -196,6 +196,7 @@ export default function App() {
             </div>
           )}
 
+          {/* Location Button */}
           <button
             onClick={getLocation}
             className="btn btn-outline-light mb-3"
@@ -204,7 +205,7 @@ export default function App() {
             📍 Use My Location
           </button>
 
-          {/* ✅ Show Spinner when loading */}
+          {/* Loading Spinner */}
           {loading && (
             <div className="d-flex justify-content-center align-items-center my-4">
               <div
@@ -217,7 +218,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ✅ Show weather only when not loading */}
+          {/* Weather Card */}
           {!loading && weather && (
             <div
               className="card mb-3 text-dark d-flex flex-column align-items-center"
@@ -252,47 +253,57 @@ export default function App() {
                 </div>
                 <p
                   className="text-capitalize mb-1"
-                  style={{ fontSize: "1.0rem" }}
+                  style={{ fontSize: "1.05rem" }}
                 >
                   {weather?.weather?.[0]?.description || "Weather condition"}
                 </p>
 
+                {/* Updated Humidity, Wind, Pressure, Sunrise, Sunset */}
                 <div
-                  className="d-flex justify-content-around flex-wrap mt-2 w-100 flex-direction-column flex-sm-row"
+                  className="d-flex flex-column mt-2 w-100"
                   style={{ fontSize: "0.85rem" }}
                 >
-                  <div>
-                    <span style={{ fontWeight: "500" }}>Humidity:</span>{" "}
-                    {weather?.main?.humidity ?? 0}%
+                  {/* First row: 3 items */}
+                  <div className="d-flex justify-content-around mb-2 gap-3">
+                    <div>
+                      <span style={{ fontWeight: "500" }}>Humidity:</span>{" "}
+                      {weather?.main?.humidity ?? 0}%
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "500" }}>Wind:</span>{" "}
+                      {weather?.wind?.speed ?? 0} m/s
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "500" }}>Pressure:</span>{" "}
+                      {weather?.main?.pressure ?? 0} hPa
+                    </div>
                   </div>
-                  <div>
-                    <span style={{ fontWeight: "500" }}>Wind: </span>
-                    {weather?.wind?.speed ?? 0} m/s
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: "500" }}>Pressure: </span>
-                    {weather?.main?.pressure ?? 0} hPa
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: "500" }}>Sunrise: </span>{" "}
-                    {weather?.sys?.sunrise
-                      ? new Date(
-                          weather.sys.sunrise * 1000
-                        ).toLocaleTimeString()
-                      : "--:--"}
-                  </div>
-                  <div>
-                    <span style={{ fontWeight: "500" }}>Sunset: </span>{" "}
-                    {weather?.sys?.sunset
-                      ? new Date(weather.sys.sunset * 1000).toLocaleTimeString()
-                      : "--:--"}
+
+                  {/* Second row: 2 items */}
+                  <div className="d-flex justify-content-around">
+                    <div>
+                      <span style={{ fontWeight: "500" }}>Sunrise:</span>{" "}
+                      {weather?.sys?.sunrise
+                        ? new Date(
+                            weather.sys.sunrise * 1000
+                          ).toLocaleTimeString()
+                        : "--:--"}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "500" }}>Sunset:</span>{" "}
+                      {weather?.sys?.sunset
+                        ? new Date(
+                            weather.sys.sunset * 1000
+                          ).toLocaleTimeString()
+                        : "--:--"}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ✅ Forecast shows only when not loading */}
+          {/* Forecast Cards */}
           {!loading && forecast.length > 0 && (
             <div className="flex-grow-1 d-flex flex-column align-items-center w-100 mt-2">
               <h5 className="mb-3 fw-semibold" style={{ fontSize: "1.4rem" }}>

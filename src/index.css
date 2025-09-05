@@ -1,9 +1,10 @@
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
 }
-
 
 @media (max-width: 1199.98px) {
   .weather-card {
@@ -12,11 +13,11 @@ html, body, #root {
   }
 
   .forecast-card {
-    flex: 0 0 30%; 
+    flex: 0 0 30%;
     margin-bottom: 15px;
   }
 
-  .container{
+  .container {
     min-height: 750px;
   }
 }
@@ -25,7 +26,6 @@ html, body, #root {
 .dark-mode {
   background-color: #121212 !important;
   color: #f5f5f5 !important;
-  
 }
 
 .dark-mode .card,
@@ -44,7 +44,7 @@ html, body, #root {
 .dark-mode p,
 .dark-mode span,
 .dark-mode div {
-  color: #919090!important;
+  color: #919090 !important;
 }
 
 /* ✅ Input and placeholder */
@@ -58,9 +58,9 @@ html, body, #root {
   color: rgba(245, 245, 245, 0.7) !important;
 }
 
-/* ✅ Buttons */
+/* ✅ Dark mode toggle button */
 .dark-toggle {
-  position: absolute;
+  position: fixed; /* ✅ always stays visible */
   top: 15px;
   right: 15px;
   padding: 6px 12px;
@@ -70,6 +70,10 @@ html, body, #root {
   color: #fff;
   cursor: pointer;
   font-size: 0.9rem;
+  z-index: 9999; /* ✅ stays on top of all elements */
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dark-mode .dark-toggle {
@@ -80,4 +84,36 @@ html, body, #root {
 /* ✅ Weather emojis in dark mode */
 .dark-mode .weather-emoji {
   opacity: 0.8; /* slightly dimmed for dark background */
+}
+
+/* Hide icon by default on large screens */
+.dark-toggle .dark-icon {
+  display: none;
+}
+.dark-toggle .dark-text {
+  display: inline;
+}
+
+/* 📱 Small screen adjustments */
+@media (max-width: 600px) {
+  .dark-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 0;
+    font-size: 1rem;
+    border-radius: 50%; /* makes it more like a floating circle */
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+  }
+
+  /* Hide text, show emoji */
+  .dark-toggle .dark-text {
+    display: none;
+  }
+
+  .dark-toggle .dark-icon {
+    display: inline;
+    font-size: 1.2rem;
+  }
 }
