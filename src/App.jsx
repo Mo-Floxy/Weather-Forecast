@@ -5,12 +5,33 @@ export default function App() {
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // kept (fetches still use it)
   const [darkMode, setDarkMode] = useState(false);
 
   const API_KEY = "0e400ff44b79686930aba79e2b3f5531";
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
+
+  // Function to group forecast and pick entry closest to 12:00
+  const getDailyForecast = (list) => {
+    const daily = {};
+    list.forEach((item) => {
+      const date = new Date(item.dt_txt).toLocaleDateString("en-CA"); // YYYY-MM-DD
+      const hour = new Date(item.dt_txt).getHours();
+      if (!daily[date]) {
+        daily[date] = item;
+      } else {
+        // Replace if this hour is closer to 12:00
+        if (
+          Math.abs(hour - 12) <
+          Math.abs(new Date(daily[date].dt_txt).getHours() - 12)
+        ) {
+          daily[date] = item;
+        }
+      }
+    });
+    return Object.values(daily).slice(0, 5); // first 5 days
+  };
 
   const fetchWeatherByCity = async (cityName) => {
     if (!cityName) return;
@@ -29,16 +50,29 @@ export default function App() {
       setWeather(data);
       setError("");
 
+      // Use forecast API (3-hour interval)
       const forecastRes = await fetch(
         `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=${API_KEY}&units=metric`
       );
       const forecastData = await forecastRes.json();
-      setForecast(forecastData.list.filter((_, i) => i % 8 === 0));
+      setForecast(getDailyForecast(forecastData.list));
     } catch (err) {
       setError("⚠ Failed to fetch weather data. Please try again later.");
       setForecast([]);
     } finally {
       setLoading(false);
+      setWeather({
+        name: "Current Location",
+        main: {
+          temp: data.current.temp,
+          humidity: data.current.humidity,
+          pressure: data.current.pressure,
+        },
+        weather: data.current.weather,
+        wind: { speed: data.current.wind_speed },
+        sys: { sunrise: data.current.sunrise, sunset: data.current.sunset },
+        uvi: data.current.uvi, // ✅ UV index
+      });
     }
   };
 
@@ -55,7 +89,7 @@ export default function App() {
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
       );
       const forecastData = await forecastRes.json();
-      setForecast(forecastData.list.filter((_, i) => i % 8 === 0));
+      setForecast(getDailyForecast(forecastData.list));
       setCity(data.name);
     } catch (err) {
       setError("⚠ Failed to fetch weather data by location.");
@@ -67,13 +101,43 @@ export default function App() {
   const getLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude),
-        () => alert("Location access denied.")
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          console.log("📍 Coords:", latitude, longitude);
+
+          try {
+            // Reverse geocode to get a nearby city
+            const res = await fetch(
+              `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
+            );
+            const data = await res.json();
+
+            if (data.length > 0) {
+              // ✅ Just use the city name
+              const cityName = data[0].name;
+              console.log("🏙️ Nearest city:", cityName);
+
+              // Fetch weather by lat/lon (reliable)
+              fetchWeatherByCoords(latitude, longitude);
+
+              // Show short city name (Ikoyi, Lekki, Ikeja…)
+              setCity(cityName);
+            } else {
+              setError("⚠ Could not determine city from location.");
+            }
+          } catch (err) {
+            console.error("Reverse geocoding failed:", err);
+            setError("⚠ Failed to fetch city name from location.");
+          }
+        },
+        (err) => {
+          console.error("❌ Geolocation error:", err);
+          alert("Location access denied or unavailable.");
+        }
       );
       setError("");
     } else {
-      alert("Geolocation not supported");
+      alert("Geolocation not supported in this browser.");
     }
   };
 
@@ -110,7 +174,7 @@ export default function App() {
       {/* Dark Mode Toggle */}
       <button className="dark-toggle" onClick={toggleDarkMode}>
         <span className="dark-text">
-          {darkMode ? "Light Mode" : "Dark Mode"}
+          {darkMode ? "☀️Light Mode" : "🌙Dark Mode"}
         </span>
         <span className="dark-icon">{darkMode ? "☀️" : "🌙"}</span>
       </button>
@@ -205,18 +269,7 @@ export default function App() {
             📍 Use My Location
           </button>
 
-          {/* Loading Spinner */}
-          {loading && (
-            <div className="d-flex justify-content-center align-items-center my-4">
-              <div
-                className="spinner-border text-light"
-                role="status"
-                style={{ width: "3rem", height: "3rem" }}
-              >
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          )}
+          {/* <<< Spinner removed - nothing here now >>> */}
 
           {/* Weather Card */}
           {!loading && weather && (

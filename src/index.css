@@ -97,10 +97,10 @@ body,
 /* 📱 Small screen adjustments */
 @media (max-width: 600px) {
   .dark-toggle {
-    top: 10px;
+    top: 15px;
     right: 10px;
     padding: 0;
-    font-size: 1rem;
+    font-size: 0.8rem;
     border-radius: 50%; /* makes it more like a floating circle */
     width: 40px;
     height: 40px;
